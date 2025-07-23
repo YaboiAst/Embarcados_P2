@@ -21,8 +21,12 @@ Este projeto recria o famoso jogo offline do Google Chrome (T-Rex Runner) em har
 
 ## Como executar
 * Clone o repositório
-* Compile o projeto no Quartus para gerar o `.sof`
+* Conecte a FPGA ao computador
 * Conecte a saída VGA a um monitor
+* Abra o Altera Monitor Program
+* Crie um novo projeto usando o modelo "video" como base. Certifique-se de selecionar o _device_ correto
+* Substitua o código dentro do `video.c` pelo conteúdo do `dino_vga.c`
+* Compile o código e carregue-o na FPGA
 
 ## Módulos
 * Renderização na VGA: Funções responsáveis para desenhar sprites e manipular pixels
