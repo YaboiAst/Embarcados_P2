@@ -60,8 +60,8 @@ void serial_init(void) {
     TH1 = 0xFD;        // Baud rate 9600
     SCON = 0x50;       // Modo 1, 8 bits, REN habilitado
     TR1 = 1;           // Inicia Timer1
-    ES = 0;            // Habilita interrup��o serial
-    EA = 0;            // Habilita interrup��es globais
+    ES = 0;            // Habilita interrupcao serial
+    EA = 0;            // Habilita interrupcoes globais
 }
 
 char serial_receive(void) {
@@ -371,28 +371,40 @@ void obstacle_respawn() {
     obstacles_y[OBSTACLES_MAX - 1] = y;
 }
 
-unsigned char get_mask_xy(unsigned char x, unsigned char y, unsigned char page) {
-    char x1, y1, dx, dy, b, C, f;
+int f1(int x, int y) {
+    int x1, C;
+    x1 = player_x + 6;
 
+    // Compute C
+    C = 705 + 8*x1;
+
+    // Plug in implicit line
+    return -8 * x - 15 * y + C;
+}
+
+int f1_prime(int x, int y) {
+    int x1, y1, dx, dy, b, C;
+    x1 = player_x;
+    y1 = 63 - 16;
+    dx = -15;
+    dy = -8;
+
+    // Compute C
+    C = dx*y1 - dy*x1;
+
+    // Plug in implicit line
+    return dy * x - dx * y + C;
+}
+
+unsigned char get_mask_xy(unsigned char x, unsigned char y, unsigned char page) {
     if (page == 7 || page < 2) {
         return 1;
     }
 
     else if (page == 2) {
-        x1 = player_x + 6;
-        y1 = 63 - 16;
-        dx = 20;
-        dy = -8;
+        return (f1(x, y) < 0 || f1_prime(x, y) > 0);
+    }
 
-        // Compute C
-        C = 8*x1 + 15*y1;
-
-        // Plug in implicit line
-        f = dy * x - dx * y + C;
-
-        // Return 1 if pixel is INSIDE cone
-        return (f < 0);
-        }
     return 0;
 }
 
@@ -630,47 +642,8 @@ void player_update() {
         case '5':
             player_speed = 5;
             break;
-        case '6':
-            crash();
-            break;
     }
     hud_update_speed();
-}
-
-void tunnel_mask() {
-    unsigned char row, col;
-    unsigned char cone_center;
-    unsigned char cone_left, cone_right;
-    unsigned char cone_width;
-
-    cone_center = player_x + 3; // center of car (car is ~6px wide)
-
-    GLCD_select_panel(0); // only darken the left game panel
-
-    for (row = 0; row < 8; row++) {  
-        // Widen the cone as you go down the screen
-        // (top rows narrower, bottom rows wider)
-        cone_width = (row * 6) + 8; // row 0 ≈ 8px, row 7 ≈ 50px
-        if (cone_width > 64) cone_width = 64;
-
-        // Compute cone boundaries
-        if (cone_center > (cone_width >> 1)) 
-            cone_left = cone_center - (cone_width >> 1);
-        else 
-            cone_left = 0;
-
-        cone_right = cone_center + (cone_width >> 1);
-        if (cone_right > 63) cone_right = 63;
-
-        // Apply mask row by row
-        GLCD_set_row(7 - row);
-        for (col = 0; col < 64; col++) {
-            if (col < cone_left || col > cone_right) {
-                GLCD_set_column(col);
-                GLCD_write_data(0x00);  // Black out area outside cone
-            }
-        }
-    }
 }
 
 void game_update() {
