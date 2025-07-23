@@ -1,9 +1,9 @@
 
-# Stock Car – Jogo para microcontrolador 8051 com GLCD
+# Questão 1 - Stock Car 8051 com GLCD
 
 Este projeto é um jogo de corrida, inspirado no Stock Car de ZX81, desenvolvido para microcontroladores 8051, exibido em um GLCD KS0108 (128x64 pixels).
 
-O jogo foi criado utilizando o compilador Keil para desenvolvimento em C e testado no simulador Proteus, permitindo validar o funcionamento do código antes de rodar no hardware real.
+O jogo foi criado utilizando o compilador Keil C51 para desenvolvimento em C e testado no simulador Proteus, permitindo validar o funcionamento do código antes de rodar no hardware real.
 
 ## Funcionalidades
 
@@ -13,7 +13,7 @@ O jogo foi criado utilizando o compilador Keil para desenvolvimento em C e testa
 - Detecção de colisões com bordas da pista e obstáculos
 - Tela de título, Game Over e Win
 - Controle por serial (ou teclado matricial opcional)
-- **Túnel em desenvolvimento**
+- Trecho de túnel (**WIP**)
 
 ## Hardware Utilizado
 - Microcontrolador AT89S52 (ou qualquer 8051 compatível)
