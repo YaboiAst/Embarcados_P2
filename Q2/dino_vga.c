@@ -22,7 +22,7 @@ int get_data_bits(int mode);
 #define CLOUD_WIDTH 20
 #define CLOUD_HEIGHT 8
 #define MAX_OBSTACLES 3
-#define MAX_CLOUDS 2
+#define MAX_CLOUDS 6
 
 /* Colors */
 #define BLACK 0x0000
@@ -90,31 +90,42 @@ void video_clear_screen(short color) {
     video_box(0, 0, screen_x - 1, screen_y - 1, color);
 }
 
+void video_text_clear(int y1, int y2) {
+    int i;
+    for (i = y1; i < y2; i++) {
+        video_text(0, i, "                                                                                                 ");
+    }
+}
+
 void draw_sprite(int x, int y, int width, int height, short color) {
     video_box(x, y, x + width - 1, y + height - 1, color);
 }
 
 void draw_dino(Dino* dino) {
     // Limpa posição anterior
-    video_box(dino->x - 2, dino->groundY - DINO_HEIGHT - 2, 
-              dino->x + DINO_WIDTH + 2, dino->groundY + 2, BLACK);
+    video_box(dino->x - 2, dino->groundY - (DINO_HEIGHT * 4), 
+              dino->x + DINO_WIDTH + 2, dino->groundY + 5, BLACK);
     
     // Desenha o dinossauro
     short color = gameOver ? GRAY : GREEN;
     
-    // Corpo
-    draw_sprite(dino->x, dino->y, DINO_WIDTH, DINO_HEIGHT, color);
-    
     // Cabeça
-    draw_sprite(dino->x + 2, dino->y - 6, 8, 6, color);
+    draw_sprite(dino->x + 5, dino->y, 9, 5, color);
+    draw_sprite(dino->x + 11, dino->y + 3, 3, 1, BLACK);
+
+    // Corpo
+    draw_sprite(dino->x + 3, dino->y + 5, 7, 5, color);
+
+    // Cauda
+    draw_sprite(dino->x, dino->y + 3, 2, 7, color);
     
     // Pernas (animação simples)
     if ((score / 5) % 2 == 0) {
-        draw_sprite(dino->x + 2, dino->y + DINO_HEIGHT, 4, 4, color);
-        draw_sprite(dino->x + 10, dino->y + DINO_HEIGHT, 4, 4, color);
+        draw_sprite(dino->x + 2, dino->y + DINO_HEIGHT - 6, 4, 4, color);
+        draw_sprite(dino->x + 10, dino->y + DINO_HEIGHT - 4, 4, 4, color);
     } else {
-        draw_sprite(dino->x + 4, dino->y + DINO_HEIGHT, 4, 4, color);
-        draw_sprite(dino->x + 8, dino->y + DINO_HEIGHT, 4, 4, color);
+        draw_sprite(dino->x + 4, dino->y + DINO_HEIGHT - 4, 4, 4, color);
+        draw_sprite(dino->x + 8, dino->y + DINO_HEIGHT - 6, 4, 4, color);
     }
 }
 
@@ -126,18 +137,17 @@ void draw_obstacle(Obstacle* obs) {
               obs->x + gameSpeed + CACTUS_WIDTH + 2, obs->y + CACTUS_HEIGHT + 2, BLACK);
     
     // Desenha o cacto
-    draw_sprite(obs->x, obs->y, CACTUS_WIDTH, CACTUS_HEIGHT, BROWN);
-    
-    // Detalhes do cacto
-    draw_sprite(obs->x + 2, obs->y + 5, 2, 8, GREEN);
-    draw_sprite(obs->x + CACTUS_WIDTH - 4, obs->y + 3, 2, 6, GREEN);
+    draw_sprite(obs->x, obs->y + 2, 3, 6, GREEN);
+    draw_sprite(obs->x + 4, obs->y + 1, 3, 19, GREEN);
+    draw_sprite(obs->x + 9, obs->y, 3, 8, GREEN);
+    draw_sprite(obs->x, obs->y + 8, 12, 3, GREEN);
 }
 
 void draw_cloud(Cloud* cloud) {
     if (!cloud->active) return;
     
     // Limpa posição anterior
-    video_box(cloud->x + gameSpeed/2, cloud->y, 
+    video_box(cloud->x + gameSpeed/2, cloud->y - 2, 
               cloud->x + gameSpeed/2 + CLOUD_WIDTH + 2, cloud->y + CLOUD_HEIGHT + 2, BLACK);
     
     // Desenha a nuvem
@@ -147,13 +157,13 @@ void draw_cloud(Cloud* cloud) {
 
 void draw_ground() {
     // Linha do chão
-    video_box(0, GROUND_Y, screen_x - 1, GROUND_Y + 2, BROWN);
+    video_box(0, GROUND_Y, screen_x - 1, GROUND_Y + 2, GRAY);
     
     // Pequenos detalhes no chão
     int i;
     for (i = 0; i < screen_x; i += 20) {
         if ((i + score) % 40 < 20) {
-            draw_sprite(i, GROUND_Y + 3, 4, 2, BROWN);
+            draw_sprite(i, GROUND_Y + 3, 4, 2, GRAY);
         }
     }
 }
@@ -174,7 +184,7 @@ void init_game() {
     int i;
     
     score = 0;
-    gameSpeed = 2;
+    gameSpeed = 5;
     gameOver = 0;
     
     // Inicializar dinossauro
@@ -188,15 +198,17 @@ void init_game() {
     for (i = 0; i < MAX_OBSTACLES; i++) {
         obstacles[i].x = screen_x + (i * 150) + simple_rand() % 100;
         obstacles[i].y = GROUND_Y - CACTUS_HEIGHT;
-        obstacles[i].active = 1;
+        obstacles[i].active = (obstacles[i].x <= screen_x) ? 1 : 0;
     }
     
     // Inicializar nuvens
     for (i = 0; i < MAX_CLOUDS; i++) {
         clouds[i].x = screen_x + (i * 200) + simple_rand() % 150;
         clouds[i].y = 50 + simple_rand() % 50;
-        clouds[i].active = 1;
+        clouds[i].active = (clouds[i].x <= screen_x) ? 1 : 0;
     }
+    video_text_clear(10, 16);
+    video_clear_screen(BLACK);
 }
 
 void update_dino() {
@@ -223,18 +235,19 @@ void update_obstacles() {
     int i;
     
     for (i = 0; i < MAX_OBSTACLES; i++) {
+        obstacles[i].x -= gameSpeed;
+
         if (obstacles[i].active) {
-            obstacles[i].x -= gameSpeed;
             
             // Remover obstáculo que saiu da tela
-            if (obstacles[i].x + CACTUS_WIDTH < 0) {
-                obstacles[i].x = screen_x + simple_rand() % 200 + 100;
-                score += 10;
-                
-                // Aumentar velocidade a cada 100 pontos
-                if (score % 100 == 0 && gameSpeed < 6) {
-                    gameSpeed++;
-                }
+            if (obstacles[i].x + 2 * CACTUS_WIDTH < 0) {
+                obstacles[i].x = screen_x + simple_rand() % 400 + 100;
+                obstacles[i].active = 0;
+            }
+        } else {
+
+            if (obstacles[i].x <= screen_x) {
+                obstacles[i].active = 1;
             }
         }
     }
@@ -244,12 +257,19 @@ void update_clouds() {
     int i;
     
     for (i = 0; i < MAX_CLOUDS; i++) {
+        clouds[i].x -= gameSpeed / 2;
+
         if (clouds[i].active) {
-            clouds[i].x -= gameSpeed / 2;
             
-            if (clouds[i].x + CLOUD_WIDTH < 0) {
-                clouds[i].x = screen_x + simple_rand() % 300 + 200;
+            if (clouds[i].x + 2 * CLOUD_WIDTH < 0) {
+                clouds[i].x = screen_x + simple_rand() % 500 + 150;
                 clouds[i].y = 50 + simple_rand() % 50;
+                clouds[i].active = 0;
+            }
+        } else {
+
+            if (clouds[i].x <= screen_x) {
+                clouds[i].active = 1;
             }
         }
     }
@@ -277,6 +297,12 @@ void game_loop() {
         update_dino();
         update_obstacles();
         update_clouds();
+                
+        score += 1;
+        // Aumentar velocidade a cada 150 pontos
+        if (score % 500 == 0 && gameSpeed < 10) {
+            gameSpeed++;
+        }
         
         // Verificar colisão
         if (check_collision()) {
@@ -291,7 +317,6 @@ void game_loop() {
 }
 
 void render_game() {
-    draw_ground();
     draw_dino(&player);
     
     int i;
@@ -303,6 +328,7 @@ void render_game() {
         draw_cloud(&clouds[i]);
     }
     
+    draw_ground();
     draw_score();
 }
 
@@ -377,14 +403,15 @@ int main() {
 
     res_offset = (screen_x == 160) ? 1 : 0;
     col_offset = (db == 8) ? 1 : 0;
-    
+
     // Limpar tela
     video_clear_screen(BLACK);
-    
+    video_text_clear(0, 16);
+
     // Tela inicial
     video_text(30, 10, "T-REX GAME");
     video_text(25, 15, "Press any key to start");
-    
+
     // Esperar input para começar
     while (!get_key_press()) {
         seed++; // Incrementar seed para randomização
