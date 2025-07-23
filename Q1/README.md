@@ -1,4 +1,3 @@
-
 # Questão 1 - Stock Car 8051 com GLCD
 
 Este projeto é um jogo de corrida, inspirado no Stock Car de ZX81, desenvolvido para microcontroladores 8051, exibido em um GLCD KS0108 (128x64 pixels).
@@ -118,3 +117,6 @@ No jogo original, após uma certa distância, o jogador entra em um túnel que l
 - Esse efeito simula os faróis do carro, aumentando a dificuldade
 
 Atualmente, a lógica das máscaras e linhas está parcialmente implementada (`get_mask_xy` e `byte_mask`), mas o túnel ainda não está totalmente integrado ao loop principal, sendo considerado incompleto.
+
+## Demonstração
+![stock_car_modelo](https://github.com/user-attachments/assets/3c45a747-1912-4ef7-9435-8bda88a562d3)
